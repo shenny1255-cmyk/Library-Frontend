@@ -1,0 +1,93 @@
+# ============================================================
+# SCHEMA HỢP ĐỒNG API — dùng cho đội backend triển khai resolver
+# Frontend (Next.js + Apollo Client) đã code sẵn theo đúng schema này.
+# Backend chỉ cần implement resolver khớp field/kiểu dữ liệu bên dưới.
+# ============================================================
+
+type Author {
+  id: ID!
+  name: String!
+  bio: String
+  books: [Book!]!
+}
+
+type Book {
+  id: ID!
+  title: String!
+  author: Author!
+  category: String!
+  publishedYear: Int
+  quantity: Int!
+  available: Int!
+}
+
+type Member {
+  id: ID!
+  name: String!
+  email: String!
+  phone: String
+  borrowRecords: [BorrowRecord!]!
+}
+
+enum BorrowStatus {
+  BORROWED
+  RETURNED
+  OVERDUE
+}
+
+type BorrowRecord {
+  id: ID!
+  book: Book!
+  member: Member!
+  borrowDate: String!   # ISO date "YYYY-MM-DD"
+  dueDate: String!      # ISO date "YYYY-MM-DD"
+  returnDate: String    # null nếu chưa trả
+  status: BorrowStatus!
+}
+
+type Stats {
+  totalBooks: Int!
+  totalCopies: Int!
+  totalMembers: Int!
+  activeBorrows: Int!
+  overdueBorrows: Int!
+}
+
+type Query {
+  books: [Book!]!
+  book(id: ID!): Book
+  authors: [Author!]!
+  author(id: ID!): Author
+  members: [Member!]!
+  member(id: ID!): Member
+  borrowRecords: [BorrowRecord!]!
+  stats: Stats!
+}
+
+type Mutation {
+  addAuthor(name: String!, bio: String): Author!
+
+  addBook(
+    title: String!
+    authorId: ID!
+    category: String!
+    publishedYear: Int
+    quantity: Int!
+  ): Book!
+  updateBook(
+    id: ID!
+    title: String
+    category: String
+    publishedYear: Int
+    quantity: Int
+  ): Book!
+  deleteBook(id: ID!): Boolean!
+
+  addMember(name: String!, email: String!, phone: String): Member!
+  deleteMember(id: ID!): Boolean!
+
+  # available của Book phải giảm 1 khi borrowBook, tăng 1 khi returnBook.
+  # Nếu book.available <= 0 thì borrowBook phải trả lỗi.
+  borrowBook(bookId: ID!, memberId: ID!, dueDate: String!): BorrowRecord!
+  returnBook(recordId: ID!): BorrowRecord!
+}

@@ -1,65 +1,138 @@
-import Image from "next/image";
+﻿"use client";
 
-export default function Home() {
+import { useQuery } from "@apollo/client/react";
+import { BookOpen, Layers, Users, Clock } from "lucide-react";
+import { GET_BORROW_RECORDS, GET_STATS } from "@/graphql/queries";
+import { Card, EmptyState, StatCard, StatusStamp } from "@/components/ui";
+
+interface StatsData {
+  stats: {
+    totalBooks: number;
+    totalCopies: number;
+    totalMembers: number;
+    activeBorrows: number;
+    overdueBorrows: number;
+  };
+}
+
+interface RecordsData {
+  borrowRecords: {
+    id: string;
+    dueDate: string;
+    status: string;
+    book: { title: string };
+    member: { name: string };
+  }[];
+}
+
+export default function DashboardPage() {
+  const statsResult = useQuery<StatsData>(GET_STATS);
+  const statsData = statsResult.data;
+  const statsLoading = statsResult.loading;
+  const statsError = statsResult.error;
+
+  const recordsResult = useQuery<RecordsData>(GET_BORROW_RECORDS);
+  const recordsData = recordsResult.data;
+  const recordsLoading = recordsResult.loading;
+  const recordsError = recordsResult.error;
+
+  const allRecords = recordsData ? recordsData.borrowRecords : [];
+  const sortedRecords = allRecords.slice().sort(function (a, b) {
+    if (a.dueDate < b.dueDate) return 1;
+    return -1;
+  });
+  const recent = sortedRecords.slice(0, 5);
+
+  let totalBooksValue = 0;
+  if (statsData) {
+    totalBooksValue = statsData.stats.totalBooks;
+  }
+
+  let totalCopiesValue = 0;
+  if (statsData) {
+    totalCopiesValue = statsData.stats.totalCopies;
+  }
+
+  let totalMembersValue = 0;
+  if (statsData) {
+    totalMembersValue = statsData.stats.totalMembers;
+  }
+
+  let activeBorrowsValue = 0;
+  if (statsData) {
+    activeBorrowsValue = statsData.stats.activeBorrows;
+  }
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="font-display text-3xl font-bold text-slate-800">Dashboard</h2>
+        <p className="text-sm text-slate-400">Home / Dashboard</p>
+      </div>
+
+      {statsError && (
+        <Card className="border-rose-300 text-rose-600">
+          Khong ket noi duoc GraphQL API. Kiem tra bien moi truong NEXT_PUBLIC_GRAPHQL_API_URL trong file .env.local.
+        </Card>
+      )}
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <StatCard
+          label="Books"
+          value={statsLoading ? "..." : totalBooksValue}
+          icon={BookOpen}
+          color="blue"
+          href="/books"
         />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+        <StatCard
+          label="Total Copies"
+          value={statsLoading ? "..." : totalCopiesValue}
+          icon={Layers}
+          color="green"
+          href="/books"
+        />
+        <StatCard
+          label="Readers"
+          value={statsLoading ? "..." : totalMembersValue}
+          icon={Users}
+          color="orange"
+          href="/members"
+        />
+        <StatCard
+          label="Total Borrowing"
+          value={statsLoading ? "..." : activeBorrowsValue}
+          icon={Clock}
+          color="red"
+          href="/borrow"
+        />
+      </div>
+
+      <Card className="p-0">
+        <div className="border-b border-line px-5 py-3">
+          <h3 className="font-display text-lg font-semibold text-slate-800">Recent borrow records</h3>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+        {recordsLoading && <div className="p-5">Dang tai...</div>}
+        {!recordsLoading && recent.length === 0 && (
+          <div className="p-5">
+            <EmptyState title="Chua co phieu muon nao" description="Vao muc Borrow / Return de tao phieu muon dau tien." />
+          </div>
+        )}
+        {!recordsLoading && recent.length > 0 && (
+          <div className="divide-y divide-line">
+            {recent.map(function (r) {
+              return (
+                <div key={r.id} className="flex items-center justify-between px-5 py-3">
+                  <div>
+                    <p className="font-medium text-ink">{r.book.title}</p>
+                    <p className="text-sm text-muted">{r.member.name} - han tra {r.dueDate}</p>
+                  </div>
+                  <StatusStamp status={r.status} />
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </Card>
     </div>
   );
 }
