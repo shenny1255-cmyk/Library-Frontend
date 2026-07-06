@@ -71,3 +71,46 @@ export const RETURN_BOOK = gql`
     }
   }
 `;
+export const REGISTER = gql`
+  mutation Register($name: String!, $email: String!, $password: String!) {
+    register(name: $name, email: $email, password: $password) {
+      token
+      user {
+        id
+        name
+        email
+        memberId
+      }
+    }
+  }
+`;
+
+export const LOGIN = gql`
+  mutation Login($email: String!, $password: String!) {
+    login(email: $email, password: $password) {
+      token
+      user {
+        id
+        name
+        email
+        memberId
+      }
+    }
+  }
+`;
+
+export const BORROW_BOOK_FOR_ME = gql`
+  mutation BorrowBookForMe($bookId: ID!, $dueDate: String!) {
+    borrowBookForMe(bookId: $bookId, dueDate: $dueDate) {
+      id
+    }
+  }
+`;
+
+export const RETURN_BOOK_FOR_ME = gql`
+  mutation ReturnBookForMe($recordId: ID!) {
+    returnBookForMe(recordId: $recordId) {
+      id
+    }
+  }
+`;

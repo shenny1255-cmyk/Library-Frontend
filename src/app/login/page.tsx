@@ -3,23 +3,34 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useMutation } from "@apollo/client/react";
 import { Library, Mail, Lock, Eye, EyeOff } from "lucide-react";
 import { PrimaryButton } from "@/components/ui";
+import { LOGIN } from "@/graphql/mutations";
 
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
-  function handleSubmit(e: React.FormEvent) {
+  const loginMutation = useMutation(LOGIN);
+  const login = loginMutation[0];
+  const submitting = loginMutation[1].loading;
+
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setSubmitting(true);
-    // TODO: goi mutation dang nhap that khi backend co san
-    setTimeout(function () {
-      router.push("/");
-    }, 500);
+    setErrorMessage("");
+    try {
+      const result = await login({ variables: { email: email, password: password } });
+      const data = result.data as any;
+      localStorage.setItem("token", data.login.token);
+      localStorage.setItem("userName", data.login.user.name);
+      router.push("/portal");
+    } catch (err: any) {
+      setErrorMessage(err.message || "Dang nhap that bai");
+    }
   }
 
   return (
@@ -30,14 +41,12 @@ export default function LoginPage() {
             <Library size={28} />
           </div>
           <h1 className="mt-3 font-display text-2xl font-bold text-slate-800">Library Manager</h1>
-          <p className="mt-1 text-sm text-slate-500">Đăng nhập để tiếp tục</p>
+          <p className="mt-1 text-sm text-slate-500">Dang nhap de tiep tuc</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-slate-500">
-              Email
-            </label>
+            <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-slate-500">Email</label>
             <div className="relative">
               <Mail size={18} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
               <input
@@ -52,9 +61,7 @@ export default function LoginPage() {
           </div>
 
           <div>
-            <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-slate-500">
-              Mat khau
-            </label>
+            <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-slate-500">Mat khau</label>
             <div className="relative">
               <Lock size={18} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
               <input
@@ -75,25 +82,21 @@ export default function LoginPage() {
             </div>
           </div>
 
-          <div className="flex items-center justify-between text-sm">
-            <label className="flex items-center gap-2 text-slate-500">
-              <input type="checkbox" className="rounded border-slate-300" />
-              Ghi nhớ đăng nhập
-            </label>
-            <a href="#" className="text-forest hover:underline">
-              Quên mật khẩu?
-            </a>
-          </div>
+          {errorMessage && (
+            <p className="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-600">
+              {errorMessage}
+            </p>
+          )}
 
           <PrimaryButton type="submit" disabled={submitting} className="w-full justify-center py-2.5">
-            {submitting ? "Đang đăng nhập..." : "Đăng nhập"}
+            {submitting ? "Dang dang nhap..." : "Dang nhap"}
           </PrimaryButton>
         </form>
 
         <p className="mt-6 text-center text-sm text-slate-500">
-          Chưa có tài khoản?{" "}
+          Chua co tai khoan?{" "}
           <Link href="/register" className="font-medium text-forest hover:underline">
-            Đăng ký ngay
+            Dang ky ngay
           </Link>
         </p>
       </div>

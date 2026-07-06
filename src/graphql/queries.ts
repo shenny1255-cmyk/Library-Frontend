@@ -90,3 +90,18 @@ export const GET_AVAILABLE_BOOKS_AND_MEMBERS = gql`
     }
   }
 `;
+export const GET_MY_BORROW_RECORDS = gql`
+  query GetMyBorrowRecords {
+    myBorrowRecords {
+      id
+      borrowDate
+      dueDate
+      returnDate
+      status
+      book {
+        id
+        title
+      }
+    }
+  }
+`;

@@ -3,8 +3,10 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useMutation } from "@apollo/client/react";
 import { Library, Mail, Lock, User, Eye, EyeOff } from "lucide-react";
 import { PrimaryButton } from "@/components/ui";
+import { REGISTER } from "@/graphql/mutations";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -13,23 +15,30 @@ export default function RegisterPage() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
-  function handleSubmit(e: React.FormEvent) {
+  const registerMutation = useMutation(REGISTER);
+  const register = registerMutation[0];
+  const submitting = registerMutation[1].loading;
+
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setErrorMessage("");
 
     if (password !== confirmPassword) {
-      setErrorMessage("Mật khẩu không trùng khớp.");
+      setErrorMessage("Mat khau nhap lai khong khop.");
       return;
     }
 
-    setSubmitting(true);
-    // TODO: goi mutation dang ky that khi backend co san
-    setTimeout(function () {
-      router.push("/login");
-    }, 500);
+    try {
+      const result = await register({ variables: { name: name, email: email, password: password } });
+      const data = result.data as any;
+      localStorage.setItem("token", data.register.token);
+      localStorage.setItem("userName", data.register.user.name);
+      router.push("/portal");
+    } catch (err: any) {
+      setErrorMessage(err.message || "Dang ky that bai");
+    }
   }
 
   return (
@@ -40,14 +49,12 @@ export default function RegisterPage() {
             <Library size={28} />
           </div>
           <h1 className="mt-3 font-display text-2xl font-bold text-slate-800">Library Manager</h1>
-          <p className="mt-1 text-sm text-slate-500">Tạo tài khoản mới</p>
+          <p className="mt-1 text-sm text-slate-500">Tao tai khoan moi</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-slate-500">
-              Họ và tên
-            </label>
+            <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-slate-500">Ho ten</label>
             <div className="relative">
               <User size={18} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
               <input
@@ -62,9 +69,7 @@ export default function RegisterPage() {
           </div>
 
           <div>
-            <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-slate-500">
-              Email
-            </label>
+            <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-slate-500">Email</label>
             <div className="relative">
               <Mail size={18} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
               <input
@@ -79,9 +84,7 @@ export default function RegisterPage() {
           </div>
 
           <div>
-            <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-slate-500">
-              Mật khẩu
-            </label>
+            <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-slate-500">Mat khau</label>
             <div className="relative">
               <Lock size={18} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
               <input
@@ -104,7 +107,7 @@ export default function RegisterPage() {
 
           <div>
             <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-slate-500">
-              Nhập lại mật khẩu
+              Nhap lai mat khau
             </label>
             <div className="relative">
               <Lock size={18} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -126,14 +129,14 @@ export default function RegisterPage() {
           )}
 
           <PrimaryButton type="submit" disabled={submitting} className="w-full justify-center py-2.5">
-            {submitting ? "Đang tạo tài khoản..." : "Đăng ký"}
+            {submitting ? "Dang tao tai khoan..." : "Dang ky"}
           </PrimaryButton>
         </form>
 
         <p className="mt-6 text-center text-sm text-slate-500">
-          Đã có tài khoản?{" "}
+          Da co tai khoan?{" "}
           <Link href="/login" className="font-medium text-forest hover:underline">
-            Đăng nhập
+            Dang nhap
           </Link>
         </p>
       </div>

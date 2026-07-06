@@ -17,10 +17,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const pathname = usePathname();
 
-  const isAuthPage = pathname === "/login" || pathname === "/register";
-  if (isAuthPage) {
-    return <>{children}</>;
-  }
+const isBareLayout = pathname === "/login" || pathname === "/register" || pathname.startsWith("/portal");
+if (isBareLayout) {
+  return <>{children}</>;
+}
 
   return (
     <div className="min-h-screen bg-slate-100">
